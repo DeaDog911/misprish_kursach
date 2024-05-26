@@ -7,7 +7,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Курсовая работа")
-        self.setFixedSize(800, 600)
+        self.setFixedSize(1200, 600)
 
 
 if __name__ == "__main__":
