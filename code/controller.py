@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow, \
-    QTableView
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow
 from PyQt5.QtCore import Qt
 
 from code.extra_window import AddWindow
@@ -7,9 +6,16 @@ from code.model import Database
 from code.view import TableView
 from code.static_funcs import get_russian_table_name
 
-
 class Controller:
-    def __init__(self, root):
+    """Контроллер для управления главным окном приложения."""
+
+    def __init__(self, root: QMainWindow):
+        """
+        Конструктор класса.
+
+        Параметры:
+        - root (QMainWindow): Главное окно приложения.
+        """
         self.root = root
         root.resize(800, 600)
         self.db = Database(dbname="mispris3",
@@ -25,35 +31,31 @@ class Controller:
         self.root.setCentralWidget(self.central_widget)
 
         self.scroll_area = QScrollArea(self.central_widget)
-        self.scroll_area.verticalScrollBar().setStyleSheet(
-            """
+        self.scroll_area.verticalScrollBar().setStyleSheet("""
             QScrollBar:vertical {
                 background: #f1f1f1;
-                width: 10px; /* Толщина скроллбара */
-                margin: 0px 0px 0px 0px; /* Расположение скроллбара */
-                border: 2px solid black; /* Черная рамка */
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+                border: 2px solid black;
             }
-
             QScrollBar::handle:vertical {
                 background: #888;
                 min-height: 20px;
             }
-
             QScrollBar::add-line:vertical {
                 subcontrol-origin: margin;
                 subcontrol-position: bottom;
                 height: 0px;
                 width: 0px;
             }
-
             QScrollBar::sub-line:vertical {
                 subcontrol-origin: margin;
                 subcontrol-position: top;
                 height: 0px;
                 width: 0px;
             }
-            """
-        )
+        """)
+
         self.layout.addWidget(self.scroll_area)
 
         self.inner_widget = QWidget()
@@ -66,35 +68,35 @@ class Controller:
         self.view = TableView(self.inner_widget)
         self.inner_layout.addWidget(self.view)
 
-        self.button_layout = QGridLayout()  # Используем QGridLayout для кнопок
-        self.layout.addLayout(self.button_layout)  # Добавляем макет кнопок в основной макет
+        self.button_layout = QGridLayout()
+        self.layout.addLayout(self.button_layout)
 
         self.buttons = []
 
-        # Создаем кнопки для каждой таблицы
         self.create_table_buttons()
 
         self.update_view()
 
-        # Создаем кнопку "+"
         self.create_add_button()
 
     def create_table_buttons(self):
+        """Создает кнопки для отображения данных каждой таблицы."""
         table_names = self.get_table_names()
         row, col = 0, 0
         for name in table_names:
             russian_name = get_russian_table_name(name[0])
             button = QPushButton(russian_name, self.central_widget)
             button.clicked.connect(lambda _, table=name[0]: self.show_table_data(table))
-            self.style_button(button)  # Применяем стиль к кнопке
+            self.style_button(button)
             self.buttons.append(button)
-            self.button_layout.addWidget(button, row, col)  # Добавляем кнопку в сетку
+            self.button_layout.addWidget(button, row, col)
             col += 1
-            if col > 2:  # Меняем расположение кнопок в три столбца
+            if col > 2:
                 col = 0
                 row += 1
 
-    def style_button(self, button):
+    def style_button(self, button: QPushButton):
+        """Применяет стилизацию к кнопке."""
         button.setStyleSheet("""
             QPushButton {
                 background-color: white;
@@ -116,12 +118,13 @@ class Controller:
             }
         """)
 
-    def get_table_names(self):
-        # SQL-запрос для получения названий всех таблиц в схеме "public"
+    def get_table_names(self) -> list:
+        """Возвращает список имен всех таблиц в базе данных."""
         sql_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
         return self.db.execute_query(sql_query)
 
-    def show_table_data(self, table_name):
+    def show_table_data(self, table_name: str):
+        """Отображает данные из выбранной таблицы."""
         sql_query = f"SELECT * FROM {table_name}"
         result = self.db.execute_query(sql_query)
         if result:
@@ -133,21 +136,23 @@ class Controller:
             print("Таблица пуста")
 
     def update_view(self):
-        # По умолчанию показываем данные из первой таблицы
+        """Обновляет вид отображения, показывая данные из первой таблицы."""
         table_names = self.get_table_names()
         if table_names:
             table_name = table_names[0][0]
             self.show_table_data(table_name)
 
     def create_add_button(self):
-        # Создаем кнопку "+"
+        """Создает кнопку для добавления записи в выбранную таблицу."""
         add_button = QPushButton("+", self.central_widget)
         add_button.clicked.connect(self.open_add_window)
-        self.style_button(add_button)  # Применяем стиль к кнопке
-        self.button_layout.addWidget(add_button)  # Добавляем кнопку в сетку
+        self.style_button(add_button)
+        self.button_layout.addWidget(add_button)
 
     def open_add_window(self):
-        add_window = AddWindow()
+        """Открывает окно для добавления новой записи."""
+        table_names = self.get_table_names()
+        add_window = AddWindow(table_names, self.db)
         add_window.exec_()
 
 

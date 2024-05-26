@@ -1,4 +1,13 @@
-def get_russian_table_name(english_name):
+def get_russian_table_name(english_name: str) -> str:
+    """
+    Получает русское название таблицы по английскому названию.
+
+    Параметры:
+    - english_name (str): Английское название таблицы.
+
+    Возвращает:
+    str: Русское название таблицы или английское название, если соответствие не найдено.
+    """
     match english_name:
         case "classification":
             return "классификация"
