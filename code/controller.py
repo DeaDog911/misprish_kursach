@@ -1,7 +1,11 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow, QTableView
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow, \
+    QTableView
 from PyQt5.QtCore import Qt
+
+from code.extra_window import AddWindow
 from code.model import Database
 from code.view import TableView
+from code.static_funcs import get_russian_table_name
 
 
 class Controller:
@@ -72,11 +76,14 @@ class Controller:
 
         self.update_view()
 
+        # Создаем кнопку "+"
+        self.create_add_button()
+
     def create_table_buttons(self):
         table_names = self.get_table_names()
         row, col = 0, 0
         for name in table_names:
-            russian_name = self.get_russian_table_name(name[0])
+            russian_name = get_russian_table_name(name[0])
             button = QPushButton(russian_name, self.central_widget)
             button.clicked.connect(lambda _, table=name[0]: self.show_table_data(table))
             self.style_button(button)  # Применяем стиль к кнопке
@@ -86,7 +93,6 @@ class Controller:
             if col > 2:  # Меняем расположение кнопок в три столбца
                 col = 0
                 row += 1
-
 
     def style_button(self, button):
         button.setStyleSheet("""
@@ -133,31 +139,21 @@ class Controller:
             table_name = table_names[0][0]
             self.show_table_data(table_name)
 
-    @staticmethod
-    def get_russian_table_name(english_name):
-        match english_name:
-            case "classification":
-                return "классификация"
-            case "product":
-                return "продукт"
-            case "parameter":
-                return "параметры"
-            case "unit":
-                return "единицы измерения"
-            case "par_class":
-                return "классификация параметров"
-            case "par_prod":
-                return "продуктовые параметры"
-            case "pos_agr":
-                return "агрегация позиций"
-            case "pos_enum":
-                return "позиционные перечисления"
-            case _:
-                return english_name  # Если название не найдено, возвращаем английское название
+    def create_add_button(self):
+        # Создаем кнопку "+"
+        add_button = QPushButton("+", self.central_widget)
+        add_button.clicked.connect(self.open_add_window)
+        self.style_button(add_button)  # Применяем стиль к кнопке
+        self.button_layout.addWidget(add_button)  # Добавляем кнопку в сетку
+
+    def open_add_window(self):
+        add_window = AddWindow()
+        add_window.exec_()
 
 
 if __name__ == "__main__":
     import sys
+
     app = QApplication(sys.argv)
     root = QMainWindow()
     controller = Controller(root)
