@@ -25,6 +25,9 @@ class Controller:
     def get_data(self):
         # Пример запроса на получение данных из таблицы
         result = self.db.execute_query("SELECT * FROM product")
+        print(
+            "данные из таблички", *result, sep="\n"
+        )
         return result
 
     def update_view(self):

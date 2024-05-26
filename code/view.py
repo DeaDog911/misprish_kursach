@@ -1,19 +1,17 @@
 from PyQt5.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtGui import QFont
 
-
-class TableView(QMainWindow):
-    def __init__(self, data):
+class TableView(QWidget):
+    def __init__(self,data):
         super().__init__()
 
-        self.setWindowTitle("Table View")
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
-        layout = QVBoxLayout()
-        self.central_widget.setLayout(layout)
-
-        self.label = QLabel(str(data))
-        layout.addWidget(self.label)
+        self.label = QLabel()
+        self.label.setStyleSheet("QLabel { font-family: Arial; font-size: 12pt; }")  # Настройка шрифта
+        self.layout.addWidget(self.label)
 
     def update_data(self, new_data):
-        self.label.setText(str(new_data))
+        formatted_data = "<br>".join(str(row) for row in new_data)  # Форматированный вывод в столбец
+        self.label.setText(f"<html>{formatted_data}</html>")
