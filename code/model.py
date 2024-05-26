@@ -1,3 +1,5 @@
+# В model.py
+
 import psycopg2
 
 class Database:
