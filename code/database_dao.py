@@ -64,3 +64,4 @@ class DatabaseDAO:
         query = f"SELECT * FROM {table_name}"
         self.cur.execute(query)
         return self.cur.fetchall()
+

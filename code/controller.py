@@ -40,27 +40,23 @@ class Controller:
         self.scroll_area = QScrollArea(self.central_widget)
         self.scroll_area.verticalScrollBar().setStyleSheet("""
             QScrollBar:vertical {
-                background: #f1f1f1;
-                width: 10px;
-                margin: 0px 0px 0px 0px;
-                border: 2px solid black;
-            }
-            QScrollBar::handle:vertical {
-                background: #888;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical {
-                subcontrol-origin: margin;
-                subcontrol-position: bottom;
-                height: 0px;
-                width: 0px;
-            }
-            QScrollBar::sub-line:vertical {
-                subcontrol-origin: margin;
-                subcontrol-position: top;
-                height: 0px;
-                width: 0px;
-            }
+                        border: none;
+                        width: 14px;
+                        margin: 15px 0 15px 0;
+                    }
+                    QScrollBar::handle:vertical {
+                        background: gray;
+                        border-radius: 5px;
+                        min-height: 30px;
+                    }
+                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                        border: none;
+                        background: none;
+                    }
+                
+                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                        background: none;
+                    }
         """)
 
         self.layout.addWidget(self.scroll_area)
@@ -153,11 +149,3 @@ class Controller:
         table_names = self.get_table_names()
         add_window = AddWindow(table_names, self.db_dao)
         add_window.exec_()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    root = QMainWindow()
-    controller = Controller(root)
-    root.show()
-    sys.exit(app.exec_())
