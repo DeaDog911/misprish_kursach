@@ -22,6 +22,8 @@ class FindWindow(QDialog):
                 title = 'Найти родителей класса'
             case 'children':
                 title = 'Найти потомков класса'
+            case 'products':
+                title = 'Найти продукты класса'
         self.setWindowTitle(title)
         self.setFixedSize(600, 500)
 
@@ -39,6 +41,8 @@ class FindWindow(QDialog):
                 find_button.clicked.connect(self.find_parents)
             case 'children':
                 find_button.clicked.connect(self.find_children)
+            case 'products':
+                find_button.clicked.connect(self.find_products)
 
         self.layout.addWidget(find_button)
 
@@ -108,3 +112,18 @@ class FindWindow(QDialog):
         for row_idx, row_data in enumerate(results):
             self.result_table.setItem(row_idx, 0, QTableWidgetItem(str(row_data[0])))
             self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
+
+    def find_products(self):
+        """Ищет продукты класса"""
+        class_id = self.id_field.text()
+        if class_id == "":
+            return
+        results = self.db_dao.find_products(class_id)
+        self.result_table.setRowCount(len(results))
+        self.result_table.setColumnCount(4)
+        self.result_table.setHorizontalHeaderLabels(["ID class", "Class short name", "ID Product", "Product short name"])
+        for row_idx, row_data in enumerate(results):
+            self.result_table.setItem(row_idx, 0, QTableWidgetItem(str(row_data[0])))
+            self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
+            self.result_table.setItem(row_idx, 2, QTableWidgetItem(str(row_data[2])))
+            self.result_table.setItem(row_idx, 3, QTableWidgetItem(row_data[3]))

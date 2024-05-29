@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QSc
 from PyQt5.QtCore import Qt
 
 from code.additional_window import FindWindow
+from code.change_product_class_window import ChangeProductClassWindow
+from code.chante_parent_class_window import ChangeParentClassWindow
 from code.delete_window import DeleteWindow
 from code.add_window import AddWindow  # Ensure these imports are correct and available
 from code.view import TableView
@@ -80,6 +82,9 @@ class Controller:
         self.layout.addWidget(self.scroll_area)
         self.create_add_button()  # Move add button creation here
         self.create_delete_button()
+        self.create_change_parent_class_button()
+        self.create_change_class_button()
+        self.create_find_products_button()
         self.create_find_children_button()
         self.create_find_parents_button()
         self.create_show_tree_button()
@@ -209,3 +214,37 @@ class Controller:
         results = self.db_dao.show_tree()
         column_names = ["ID класса", "Название класса", "ID продукта", "Название продукта"]
         self.view.update_data(results, column_names)
+
+    def create_change_parent_class_button(self):
+        button = QPushButton('Изменить родителя класса', self.central_widget)
+        button.clicked.connect(self.show_change_parent_class_dialog)
+        self.style_button(button)
+        self.layout.addWidget(button)
+
+    def show_change_parent_class_dialog(self):
+        dialog = ChangeParentClassWindow(self.root, self.db_dao)
+        dialog.exec_()
+
+    def create_change_class_button(self):
+        """Создает кнопку для изменения класса продукта."""
+        change_class_button = QPushButton("Изменить класс продукта", self.central_widget)
+        change_class_button.clicked.connect(self.open_change_class_window)
+        self.style_button(change_class_button)
+        self.layout.addWidget(change_class_button)
+
+    def open_change_class_window(self):
+        """Открывает окно для изменения класса продукта."""
+        change_class_window = ChangeProductClassWindow(self.db_dao)
+        change_class_window.exec_()
+
+    def create_find_products_button(self):
+        """Создает кнопку для поиска продуктов по классу."""
+        find_products_button = QPushButton("Найти продукты по классу", self.central_widget)
+        find_products_button.clicked.connect(self.open_find_products_window)
+        self.style_button(find_products_button)
+        self.layout.addWidget(find_products_button)
+
+    def open_find_products_window(self):
+        """Открывает окно для поиска продуктов по классу."""
+        find_products_window = FindWindow(self.db_dao, "products")
+        find_products_window.exec_()

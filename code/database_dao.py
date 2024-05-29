@@ -139,3 +139,30 @@ class DatabaseDAO:
         self.cur.execute(query)
         results = self.cur.fetchall()
         return results
+
+    def find_products(self, class_id):
+        query = f"""
+                SELECT * FROM find_products(array[{class_id}]);
+                """
+        try:
+            self.cur.execute(query)
+            results = self.cur.fetchall()
+        except Exception as e:
+            print(e)
+        return results
+
+    def change_product_class(self, change_id_product: int, new_id_class: int):
+        """Изменяет класс продукта."""
+        query = f"""
+        SELECT change_product_class({change_id_product},{new_id_class});
+        """
+        self.cur.execute(query)
+        self.connection.commit()
+
+    def change_parent_class(self, child_id_class: int, new_parent_id_class: int):
+        """Изменяет родителя указанного класса."""
+        query = f"""
+                SELECT change_parent_class({child_id_class},{new_parent_id_class});
+                """
+        self.cur.execute(query)
+        self.connection.commit()
