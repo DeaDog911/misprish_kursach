@@ -10,7 +10,7 @@ class MainWindow(QMainWindow):
         """Конструктор класса."""
         super().__init__()
         self.setWindowTitle("Курсовая работа")
-        self.setFixedSize(1200, 600)
+        self.setFixedSize(1200, 800)
 
 
 if __name__ == "__main__":

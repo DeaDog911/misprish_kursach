@@ -12,7 +12,7 @@ def get_russian_table_name(english_name: str) -> str:
         case "classification":
             return "классификация"
         case "product":
-            return "продукт"
+            return "продукты"
         case "parameter":
             return "параметры"
         case "unit":

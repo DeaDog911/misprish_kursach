@@ -2,7 +2,9 @@ import sys
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow
 from PyQt5.QtCore import Qt
 
-from code.extra_window import AddWindow  # Ensure these imports are correct and available
+from code.additional_window import FindWindow
+from code.delete_window import DeleteWindow
+from code.add_window import AddWindow  # Ensure these imports are correct and available
 from code.view import TableView
 from code.static_funcs import get_russian_table_name
 from code.database_dao import DatabaseDAO
@@ -19,7 +21,7 @@ class Controller:
         - root (QMainWindow): Главное окно приложения.
         """
         self.root = root
-        root.resize(800, 600)
+        # root.resize(800, 600)
 
         # Инициализация DatabaseDAO
         self.db_dao = DatabaseDAO('database.ini', 'queries.json')
@@ -40,23 +42,27 @@ class Controller:
         self.scroll_area = QScrollArea(self.central_widget)
         self.scroll_area.verticalScrollBar().setStyleSheet("""
             QScrollBar:vertical {
-                        border: none;
-                        width: 14px;
-                        margin: 15px 0 15px 0;
-                    }
-                    QScrollBar::handle:vertical {
-                        background: gray;
-                        border-radius: 5px;
-                        min-height: 30px;
-                    }
-                    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                        border: none;
-                        background: none;
-                    }
-                
-                    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                        background: none;
-                    }
+                background: #f1f1f1;
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+                border: 2px solid black;
+            }
+            QScrollBar::handle:vertical {
+                background: #888;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical {
+                subcontrol-origin: margin;
+                subcontrol-position: bottom;
+                height: 0px;
+                width: 0px;
+            }
+            QScrollBar::sub-line:vertical {
+                subcontrol-origin: margin;
+                subcontrol-position: top;
+                height: 0px;
+                width: 0px;
+            }
         """)
 
         self.layout.addWidget(self.scroll_area)
@@ -73,6 +79,10 @@ class Controller:
 
         self.layout.addWidget(self.scroll_area)
         self.create_add_button()  # Move add button creation here
+        self.create_delete_button()
+        self.create_find_children_button()
+        self.create_find_parents_button()
+        self.create_show_tree_button()
 
         self.update_view()
 
@@ -100,7 +110,7 @@ class Controller:
                 color: black;
                 font-weight: bold;
                 border: 2px solid black;
-                padding: 10px;
+                padding: 5px;;
                 border-radius: 15px;
                 font-size: 12pt;
                 transition: all 0.2s ease;
@@ -144,8 +154,58 @@ class Controller:
         self.style_button(add_button)
         self.layout.addWidget(add_button)  # Add to the main layout at the bottom
 
+    def create_delete_button(self):
+        """Создает кнопку для удаления записи из выбранной таблицы."""
+        delete_button = QPushButton("-", self.central_widget)
+        delete_button.clicked.connect(self.open_delete_window)
+        self.style_button(delete_button)
+        self.layout.addWidget(delete_button)  # Add to the main layout at the bottom
+
+    def create_find_children_button(self):
+        """Создает кнопку для поиска потомков класса."""
+        find_children_button = QPushButton("Найти потомков", self.central_widget)
+        find_children_button.clicked.connect(self.open_find_children_window)
+        self.style_button(find_children_button)
+        self.layout.addWidget(find_children_button)
+
+    def create_find_parents_button(self):
+        """Создает кнопку для поиска потомков класса."""
+        find_children_button = QPushButton("Найти родителей", self.central_widget)
+        find_children_button.clicked.connect(self.open_find_parents_window)
+        self.style_button(find_children_button)
+        self.layout.addWidget(find_children_button)
+
     def open_add_window(self):
         """Открывает окно для добавления новой записи."""
         table_names = self.get_table_names()
         add_window = AddWindow(table_names, self.db_dao)
         add_window.exec_()
+
+    def open_delete_window(self):
+        """Открывает окно для удаления записи."""
+        table_names = self.get_table_names()
+        delete_window = DeleteWindow(table_names, self.db_dao)
+        delete_window.exec_()
+
+    def open_find_children_window(self):
+        """Открывает окно для поиска потомков класса."""
+        find_children_window = FindWindow(self.db_dao, "children")
+        find_children_window.exec_()
+
+    def open_find_parents_window(self):
+        """Открывает окно для поиска потомков класса."""
+        find_children_window = FindWindow(self.db_dao, "parents")
+        find_children_window.exec_()
+
+    def create_show_tree_button(self):
+        """Создает кнопку для отображения дерева классов и продуктов."""
+        show_tree_button = QPushButton("Отобразить дерево", self.central_widget)
+        show_tree_button.clicked.connect(self.show_tree)
+        self.style_button(show_tree_button)
+        self.layout.addWidget(show_tree_button)  # Add to the main layout at the bottom
+
+    def show_tree(self):
+        """Отображает дерево классов и продуктов."""
+        results = self.db_dao.show_tree()
+        column_names = ["ID класса", "Название класса", "ID продукта", "Название продукта"]
+        self.view.update_data(results, column_names)

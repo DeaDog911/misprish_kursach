@@ -102,7 +102,7 @@ class AddWindow(QDialog):
         for column in columns:
             label = QLabel(column)
             line_edit = QLineEdit()
-            line_edit.setFixedHeight(30)
+            line_edit.setFixedHeight(35)
             self.fields[column] = line_edit
             self.fields_layout.addWidget(label)
             self.fields_layout.addWidget(line_edit)
@@ -112,31 +112,10 @@ class AddWindow(QDialog):
         data = {column: self.fields[column].text().strip() for column in self.fields}
 
         try:
-            self.insert_data_into_table(selected_table, data)
+            self.db_dao.insert_data_into_table(selected_table, data)
             QMessageBox.information(self, "Успех", f"Запись успешно добавлена в таблицу {selected_table}.")
-            self.close()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить запись: {str(e)}")
+        self.accept()
 
-    def insert_data_into_table(self, table_name, data):
-        """Вставляет данные в указанную таблицу."""
-        if table_name == "classification":
-            query = f"""
-            SELECT create_class (%s, %s, %s, %s);
-            """
-            values = (data["short_name"], data["name"], data["id_unit"], data["id_main_class"])
-        elif table_name == "product":
-            query = """
-            SELECT create_product (%s, %s, %s);
-            """
-            values = (data["short_name"], data["name"], data["id_class"])
-        elif table_name == "unit":
-            query = """
-            SELECT create_unit (%s, %s, %s);
-            """
-            values = (data["short_name"], data["name"], data["code"])
-        else:
-            raise ValueError(f"Неизвестная таблица: {table_name}")
 
-        self.db_dao.cur.execute(query, values)
-        self.db_dao.connection.commit()
