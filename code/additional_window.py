@@ -94,6 +94,8 @@ class FindWindow(QDialog):
     def find_children(self):
         """Ищет потомков класса в базе данных."""
         class_id = self.id_field.text()
+        if class_id == "":
+            return
         results = self.db_dao.find_children(class_id)
         self.result_table.setRowCount(len(results))
         self.result_table.setColumnCount(2)
@@ -105,6 +107,8 @@ class FindWindow(QDialog):
     def find_parents(self):
         """Ищет родителей класса"""
         class_id = self.id_field.text()
+        if class_id == "":
+            return
         results = self.db_dao.find_parents(class_id)
         self.result_table.setRowCount(len(results))
         self.result_table.setColumnCount(2)
