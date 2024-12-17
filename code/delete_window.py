@@ -46,34 +46,46 @@ class DeleteWindow(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: lightblue;
+                background-color: #f7f9fc;
+                border: 1px solid #d9d9d9;
+                border-radius: 10px;
             }
             QLabel {
-                color: black;
-                font-size: 12pt;
+                color: #333333;
+                font-size: 14px;
+                font-weight: bold;
             }
             QComboBox, QLineEdit {
-                background-color: white;
-                color: black;
-                font-size: 12pt;
-                border: 2px solid black;
+                background-color: #ffffff;
+                color: #333333;
+                font-size: 12px;
+                border: 1px solid #a6a6a6;
                 border-radius: 5px;
-                padding: 5px;
+                padding: 6px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #ffffff;
+                border: 1px solid #d9d9d9;
+                selection-background-color: #0078d7;
+                selection-color: #ffffff;
             }
             QPushButton {
-                background-color: white;
-                color: black;
-                font-size: 12pt;
-                border: 2px solid black;
+                background-color: #0078d7;
+                color: #ffffff;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
                 border-radius: 5px;
-                padding: 5px 10px;
+                padding: 8px 12px;
             }
             QPushButton:hover {
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 black, stop: 1 #333333
-                );
-                color: white;
+                background-color: #005bb5;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
             }
         """)
 

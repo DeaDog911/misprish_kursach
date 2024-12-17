@@ -3,7 +3,6 @@ from PyQt5.QtCore import Qt
 
 from code.database_dao import DatabaseDAO
 
-
 class AddWindow(QDialog):
     """Окно для добавления записей в базу данных."""
 
@@ -20,7 +19,7 @@ class AddWindow(QDialog):
         self.db_dao = db_dao
 
         self.setWindowTitle("Добавить запись")
-        self.setFixedSize(400, 400)  # Фиксированный размер окна
+        self.setFixedSize(400, 450)  # Увеличенный размер окна для удобства
 
         self.table_names = table_names
         self.fields = {}
@@ -28,6 +27,7 @@ class AddWindow(QDialog):
         self.layout = QVBoxLayout()
 
         label_table = QLabel("Выберите таблицу:")
+        label_table.setAlignment(Qt.AlignLeft)
         self.layout.addWidget(label_table)
 
         self.table_selector = QComboBox()
@@ -48,35 +48,49 @@ class AddWindow(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: lightblue;
+                background-color: #f7f9fc;
+                border: 1px solid #d9d9d9;
+                border-radius: 10px;
+                padding: 20px;
             }
             QLabel {
-                color: black;
-                font-size: 12pt;
+                color: #333333;
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 8px;
             }
             QComboBox, QLineEdit {
-                background-color: white;
-                color: black;
-                font-size: 10pt;
-                border: 2px solid black;
+                background-color: #ffffff;
+                color: #333333;
+                font-size: 12px;
+                border: 1px solid #a6a6a6;
                 border-radius: 5px;
-                padding: 5px;
-                height: 20px;
+                padding: 6px;
+                height: 30px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #ffffff;
+                border: 1px solid #d9d9d9;
+                selection-background-color: #0078d7;
+                selection-color: white;
             }
             QPushButton {
-                background-color: white;
-                color: black;
-                font-size: 12pt;
-                border: 2px solid black;
+                background-color: #0078d7;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
                 border-radius: 5px;
-                padding: 5px 10px;
+                padding: 8px 12px;
             }
             QPushButton:hover {
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 black, stop: 1 #333333
-                );
-                color: white;
+                background-color: #005bb5;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
             }
         """)
 
@@ -96,6 +110,8 @@ class AddWindow(QDialog):
             columns = ["short_name", "name", "id_class"]
         elif selected_table == "unit":
             columns = ["short_name", "name", "code"]
+        elif selected_table == "spec_position":
+            columns = ["id_position","id_product", "id_part", "quantity"]
         else:
             columns = []
 
@@ -117,5 +133,3 @@ class AddWindow(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить запись: {str(e)}")
         self.accept()
-
-
