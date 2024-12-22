@@ -6,7 +6,7 @@ from code.database_dao import DatabaseDAO
 class AddWindow(QDialog):
     """Окно для добавления записей в базу данных."""
 
-    def __init__(self, table_names: list, db_dao: DatabaseDAO):
+    def __init__(self, table_name: str, db_dao: DatabaseDAO):
         """
         Конструктор класса.
 
@@ -17,23 +17,15 @@ class AddWindow(QDialog):
         super().__init__()
 
         self.db_dao = db_dao
-
+        self.table_name = table_name
+        self.fields = {}
         self.setWindowTitle("Добавить запись")
         self.setFixedSize(400, 450)  # Увеличенный размер окна для удобства
 
-        self.table_names = table_names
-        self.fields = {}
-
         self.layout = QVBoxLayout()
 
-        label_table = QLabel("Выберите таблицу:")
-        label_table.setAlignment(Qt.AlignLeft)
+        label_table = QLabel(f"Таблица: {self.table_name}")
         self.layout.addWidget(label_table)
-
-        self.table_selector = QComboBox()
-        self.table_selector.addItems(table_names)
-        self.table_selector.currentIndexChanged.connect(self.update_fields)
-        self.layout.addWidget(self.table_selector)
 
         self.fields_layout = QVBoxLayout()
         self.layout.addLayout(self.fields_layout)
@@ -96,21 +88,21 @@ class AddWindow(QDialog):
 
     def update_fields(self):
         """Обновляет поля ввода в зависимости от выбранной таблицы."""
-        selected_table = self.table_selector.currentText()
+        # selected_table = self.table_selector.currentText()
 
         # Очищаем предыдущие поля
-        for i in reversed(range(self.fields_layout.count())):
-            self.fields_layout.itemAt(i).widget().setParent(None)
+        # for i in reversed(range(self.fields_layout.count())):
+        #     self.fields_layout.itemAt(i).widget().setParent(None)
+        #
+        # self.fields = {}
 
-        self.fields = {}
-
-        if selected_table == "classification":
+        if self.table_name == "classification":
             columns = ["short_name", "name", "id_unit", "id_main_class"]
-        elif selected_table == "product":
+        elif self.table_name == "product":
             columns = ["short_name", "name", "id_class"]
-        elif selected_table == "unit":
+        elif self.table_name == "unit":
             columns = ["short_name", "name", "code"]
-        elif selected_table == "spec_position":
+        elif self.table_name == "spec_position":
             columns = ["id_position","id_product", "id_part", "quantity"]
         else:
             columns = []
@@ -124,12 +116,11 @@ class AddWindow(QDialog):
             self.fields_layout.addWidget(line_edit)
 
     def add_record(self):
-        selected_table = self.table_selector.currentText()
         data = {column: self.fields[column].text().strip() for column in self.fields}
 
         try:
-            self.db_dao.insert_data_into_table(selected_table, data)
-            QMessageBox.information(self, "Успех", f"Запись успешно добавлена в таблицу {selected_table}.")
+            self.db_dao.insert_data_into_table(self.table_name, data)
+            QMessageBox.information(self, "Успех", f"Запись успешно добавлена в таблицу {self.table_name}.")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить запись: {str(e)}")
         self.accept()

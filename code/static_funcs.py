@@ -10,22 +10,12 @@ def get_russian_table_name(english_name: str) -> str:
     """
     match english_name:
         case "classification":
-            return "классификация"
+            return "Классификация"
         case "product":
-            return "изделие"
-        case "parameter":
-            return "параметры"
+            return "Изделие"
         case "unit":
-            return "единицы измерения"
+            return "Единицы измерения"
         case "spec_position":
-            return "позиция спецификации"
-        case "par_class":
-            return "классификация параметров"
-        case "par_prod":
-            return "параметры изделий"
-        case "pos_agr":
-            return "агрегация позиций"
-        case "pos_enum":
-            return "позиционные перечисления"
+            return "Спецификация"
         case _:
             return english_name  # Если название не найдено, возвращаем английское название

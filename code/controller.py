@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QScrollArea, QGridLayout, QMainWindow, \
+    QHBoxLayout
 
 from code.additional_window import FindWindow
 from code.change_product_class_window import ChangeProductClassWindow
@@ -60,7 +60,15 @@ class Controller:
         self.button_layout = QGridLayout()
         self.layout.addLayout(self.button_layout)
 
-        self.create_table_buttons()
+        self.button_groups = {
+            "classification": [],
+            "product": [],
+            "unit": [],
+            "spec_position": [],
+        }
+        self.current_group = None
+
+        self.create_section_buttons()  # Добавляем кнопки выбора разделов
 
         self.scroll_area = QScrollArea(self.central_widget)
         self.scroll_area.verticalScrollBar().setStyleSheet("""
@@ -104,33 +112,102 @@ class Controller:
         self.calculate_norm_thread = None
 
         self.layout.addWidget(self.scroll_area)
-        self.create_add_button()  # Move add button creation here
-        self.create_delete_button()
-        self.create_change_parent_class_button()
-        self.create_change_class_button()
-        self.create_find_products_button()
-        self.create_find_children_button()
-        self.create_find_parents_button()
-        self.create_show_tree_button()
-        self.create_calculate_norm_button()  # Вызываем создание кнопки подсчета сводных норм
-        self.create_show_spec_structure_button()
+
+        self.create_classification_buttons()
+        self.create_product_buttons()
+        self.create_units_buttons()
+        self.create_specification_buttons()
+
+        self.show_buttons_for_group(None)
         self.update_view()
 
-    def create_table_buttons(self):
-        """Создает кнопки для отображения данных каждой таблицы."""
+    def create_section_buttons(self):
+        """Создает кнопки для выбора разделов."""
         table_names = self.get_table_names()
-        row, col = 0, 0
+        section_button_layout = QHBoxLayout()  # Используем горизонтальный макет
         for name in table_names:
             russian_name = get_russian_table_name(name)
             button = QPushButton(russian_name, self.central_widget)
+            button.clicked.connect(lambda _, sec=name: self.show_buttons_for_group(sec))
             button.clicked.connect(lambda _, table=name: self.show_table_data(table))
             self.style_button(button)
-            self.buttons.append(button)
-            self.button_layout.addWidget(button, row, col)
-            col += 1
-            if col > 2:
-                col = 0
-                row += 1
+            section_button_layout.addWidget(button)  # Добавляем кнопку в горизонтальный макет
+        self.layout.addLayout(section_button_layout)
+
+    def create_classification_buttons(self):
+        """Создает кнопки для раздела 'Классификация'."""
+        add_button = self.create_add_button("classification")
+        self.button_groups["classification"].append(add_button)
+
+        delete_button = self.create_delete_button("classification")
+        self.button_groups["classification"].append(delete_button)
+
+        change_parent = self.create_change_parent_class_button()
+        self.button_groups["classification"].append(change_parent)
+
+        find_products = self.create_find_products_button()
+        self.button_groups["classification"].append(find_products)
+
+        find_children = self.create_find_children_button()
+        self.button_groups["classification"].append(find_children)
+
+        find_parents = self.create_find_parents_button()
+        self.button_groups["classification"].append(find_parents)
+
+        show_tree_button = self.create_show_tree_button()
+        self.button_groups["classification"].append(show_tree_button)
+
+    def create_product_buttons(self):
+        """Создает кнопки для раздела 'Изделие'."""
+        add_button = self.create_add_button("product")
+        self.button_groups["product"].append(add_button)
+
+        delete_button = self.create_delete_button("product")
+        self.button_groups["product"].append(delete_button)
+
+        change_class_button = self.create_change_class_button()
+        self.button_groups["product"].append(change_class_button)
+
+        calculate_norm_button = self.create_calculate_norm_button()
+        self.button_groups["product"].append(calculate_norm_button)
+
+        find_change = self.create_find_changes_button()
+        self.button_groups["product"].append(find_change)
+
+    def create_specification_buttons(self):
+        """Создает кнопки для раздела 'Спецификация'."""
+        add_button = self.create_add_button("spec_position")
+        self.button_groups["spec_position"].append(add_button)
+
+        delete_button = self.create_delete_button("spec_position")
+        self.button_groups["spec_position"].append(delete_button)
+
+        spec_structure_button = self.create_show_spec_structure_button()
+        self.button_groups["spec_position"].append(spec_structure_button)
+
+        copy_spec_button = self.create_copy_spec_button()
+        self.button_groups["spec_position"].append(copy_spec_button)
+
+    def create_units_buttons(self):
+        """Создает кнопки для раздела 'Единицы измерения'."""
+        add_button = self.create_add_button("unit")
+        self.button_groups["unit"].append(add_button)
+
+        delete_button = self.create_delete_button("unit")
+        self.button_groups["unit"].append(delete_button)
+
+    def show_buttons_for_group(self, group_name):
+        """Показывает кнопки для выбранного раздела и скрывает остальные."""
+        # Скрываем все кнопки
+        for group in self.button_groups.values():
+            for button in group:
+                button.hide()
+
+        # Показываем кнопки только для выбранной группы
+        if group_name and group_name in self.button_groups:
+            for button in self.button_groups[group_name]:
+                button.show()
+            self.current_group = group_name
 
     def style_button(self, button: QPushButton):
         """Применяет стилизацию к кнопке."""
@@ -139,18 +216,28 @@ class Controller:
                 background-color: #ffffff;
                 color: #333333;
                 border: 2px solid #0078d7;
-                border-radius: 10px;
-                padding: 8px 16px;
-                font-size: 14px;
+                border-radius: 12px;
+                padding: 12px 24px;
+                font-size: 16px;
                 font-weight: bold;
+                transition: background-color 0.3s, transform 0.3s;
+                box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
             }
             QPushButton:hover {
                 background-color: #0078d7;
                 color: #ffffff;
+                transform: scale(1.05);
             }
             QPushButton:pressed {
                 background-color: #005bb5;
                 color: #ffffff;
+                transform: scale(0.95);
+                box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            QPushButton:disabled {
+                background-color: #d3d3d3;
+                color: #8c8c8c;
+                border: 2px solid #b0b0b0;
             }
         """)
 
@@ -176,19 +263,21 @@ class Controller:
             table_name = table_names[0]
             self.show_table_data(table_name)
 
-    def create_add_button(self):
+    def create_add_button(self, table_name):
         """Создает кнопку для добавления записи в выбранную таблицу."""
-        add_button = QPushButton("+", self.central_widget)
-        add_button.clicked.connect(self.open_add_window)
+        add_button = QPushButton("Добавить", self.central_widget)
+        add_button.clicked.connect(lambda: self.open_add_window(table_name))
+        self.layout.addWidget(add_button)
         self.style_button(add_button)
-        self.layout.addWidget(add_button)  # Add to the main layout at the bottom
+        return add_button
 
-    def create_delete_button(self):
+    def create_delete_button(self, table_name):
         """Создает кнопку для удаления записи из выбранной таблицы."""
-        delete_button = QPushButton("-", self.central_widget)
-        delete_button.clicked.connect(self.open_delete_window)
+        delete_button = QPushButton("Удалить", self.central_widget)
+        delete_button.clicked.connect(lambda: self.open_delete_window(table_name))
         self.style_button(delete_button)
-        self.layout.addWidget(delete_button)  # Add to the main layout at the bottom
+        self.layout.addWidget(delete_button)
+        return delete_button
 
     def create_find_children_button(self):
         """Создает кнопку для поиска потомков класса."""
@@ -196,6 +285,7 @@ class Controller:
         find_children_button.clicked.connect(self.open_find_children_window)
         self.style_button(find_children_button)
         self.layout.addWidget(find_children_button)
+        return find_children_button
 
     def create_find_parents_button(self):
         """Создает кнопку для поиска потомков класса."""
@@ -203,17 +293,16 @@ class Controller:
         find_children_button.clicked.connect(self.open_find_parents_window)
         self.style_button(find_children_button)
         self.layout.addWidget(find_children_button)
+        return find_children_button
 
-    def open_add_window(self):
+    def open_add_window(self, table_name):
         """Открывает окно для добавления новой записи."""
-        table_names = self.get_table_names()
-        add_window = AddWindow(table_names, self.db_dao)
+        add_window = AddWindow(table_name, self.db_dao)
         add_window.exec_()
 
-    def open_delete_window(self):
+    def open_delete_window(self,table_name):
         """Открывает окно для удаления записи."""
-        table_names = self.get_table_names()
-        delete_window = DeleteWindow(table_names, self.db_dao)
+        delete_window = DeleteWindow(table_name, self.db_dao)
         delete_window.exec_()
 
     def open_find_children_window(self):
@@ -231,7 +320,8 @@ class Controller:
         show_tree_button = QPushButton("Отобразить дерево", self.central_widget)
         show_tree_button.clicked.connect(self.show_tree)
         self.style_button(show_tree_button)
-        self.layout.addWidget(show_tree_button)  # Add to the main layout at the bottom
+        self.layout.addWidget(show_tree_button)
+        return show_tree_button
 
     def show_tree(self):
         """Отображает дерево классов и продуктов."""
@@ -244,6 +334,7 @@ class Controller:
         button.clicked.connect(self.show_change_parent_class_dialog)
         self.style_button(button)
         self.layout.addWidget(button)
+        return button
 
     def show_change_parent_class_dialog(self):
         dialog = ChangeParentClassWindow(self.root, self.db_dao)
@@ -255,6 +346,7 @@ class Controller:
         change_class_button.clicked.connect(self.open_change_class_window)
         self.style_button(change_class_button)
         self.layout.addWidget(change_class_button)
+        return change_class_button
 
     def open_change_class_window(self):
         """Открывает окно для изменения класса продукта."""
@@ -267,6 +359,7 @@ class Controller:
         find_products_button.clicked.connect(self.open_find_products_window)
         self.style_button(find_products_button)
         self.layout.addWidget(find_products_button)
+        return find_products_button
 
     def open_find_products_window(self):
         """Открывает окно для поиска продуктов по классу."""
@@ -279,6 +372,7 @@ class Controller:
         calculate_norm_button.clicked.connect(self.start_calculate_norm_thread)
         self.style_button(calculate_norm_button)
         self.layout.addWidget(calculate_norm_button)
+        return calculate_norm_button
 
     def start_calculate_norm_thread(self):
         """Запускает поток для подсчета сводных норм."""
@@ -298,6 +392,7 @@ class Controller:
         show_spec_structure_button.clicked.connect(self.show_spec_structure)  # Здесь нужно подключить правильный метод
         self.style_button(show_spec_structure_button)
         self.layout.addWidget(show_spec_structure_button)
+        return show_spec_structure_button
 
     def show_spec_structure(self):
         """Отображает структуру спецификации, используя метод из DatabaseDAO."""
@@ -306,6 +401,29 @@ class Controller:
             self.view.update_data(results, column_names)  # Обновляем представление
         else:
             print("Структура спецификации пуста")
+
+    def create_find_changes_button(self):
+        """Создает кнопку для нахождения изменения."""
+        find_changes_button = QPushButton("Найти изменения", self.central_widget)
+        find_changes_button.clicked.connect(self.find_changes)
+        self.style_button(find_changes_button)
+        self.layout.addWidget(find_changes_button)
+        return find_changes_button
+
+    def find_changes(self):
+        return
+
+
+    def create_copy_spec_button(self):
+        """Создает кнопку для копирования спецификации."""
+        copy_spec_button = QPushButton("Скопировать спецификацию", self.central_widget)
+        copy_spec_button.clicked.connect(self.copy_spec)
+        self.style_button(copy_spec_button)
+        self.layout.addWidget(copy_spec_button)
+        return copy_spec_button
+
+    def copy_spec(self):
+        return
 
     def handle_error(self, error_message):
         """Обрабатывает ошибки, если они произошли."""
