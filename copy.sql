@@ -278,7 +278,6 @@ CREATE OR REPLACE FUNCTION create_spec_position(
     id_position_input INTEGER,
     quantity NUMERIC
 )
-
 RETURNS VOID AS $$
 DECLARE
     v_exists BOOLEAN;
@@ -405,13 +404,14 @@ BEGIN
     SELECT
         sp.id_position,
         sp.id_product,
-        sp.quantity::numeric(13, 2),  -- Приводим к типу NUMERIC
+        sp.quantity,
         ph.depth
     FROM Spec_position sp
     JOIN product_hierarchy ph ON sp.id_product = ph.id_product
     ORDER BY ph.root_product, ph.depth, sp.id_position;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 -- подсчет сводных норм

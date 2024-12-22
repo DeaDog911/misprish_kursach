@@ -11,6 +11,27 @@ from code.view import TableView
 from code.static_funcs import get_russian_table_name
 from code.database_dao import DatabaseDAO
 
+from PyQt5.QtCore import QThread, pyqtSignal
+
+class CalculateNormsThread(QThread):
+    """Поток для выполнения подсчета сводных норм в фоновом режиме."""
+    result_signal = pyqtSignal(list)  # Сигнал для передачи результата обратно в главный поток
+    error_signal = pyqtSignal(str)  # Сигнал для передачи ошибок
+
+    def __init__(self, db_dao):
+        super().__init__()
+        self.db_dao = db_dao
+
+    def run(self):
+        """Запускает подсчет сводных норм в фоновом потоке."""
+        try:
+            result = self.db_dao.calculate_component_quantities()
+            if result:
+                self.result_signal.emit(result)  # Отправляем результат обратно в главный поток
+            else:
+                self.error_signal.emit("Ошибка при подсчете сводных норм.")
+        except Exception as e:
+            self.error_signal.emit(str(e))
 
 class Controller:
     """Контроллер для управления главным окном приложения."""
@@ -44,26 +65,27 @@ class Controller:
         self.scroll_area = QScrollArea(self.central_widget)
         self.scroll_area.verticalScrollBar().setStyleSheet("""
             QScrollBar:vertical {
-                background: #f1f1f1;
-                width: 10px;
-                margin: 0px 0px 0px 0px;
-                border: 2px solid black;
+                background: #f0f0f0;
+                width: 12px;
+                border: 1px solid #d9d9d9;
+                margin: 2px 0 2px 0;
+                border-radius: 6px;
             }
             QScrollBar::handle:vertical {
-                background: #888;
+                background: #4CAF50;
+                border-radius: 6px;
                 min-height: 20px;
             }
-            QScrollBar::add-line:vertical {
-                subcontrol-origin: margin;
-                subcontrol-position: bottom;
-                height: 0px;
-                width: 0px;
+            QScrollBar::handle:vertical:hover {
+                background: #45a049;
             }
-            QScrollBar::sub-line:vertical {
-                subcontrol-origin: margin;
-                subcontrol-position: top;
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
                 width: 0px;
+                background: none;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
             }
         """)
 
@@ -79,6 +101,8 @@ class Controller:
         self.view = TableView(self.inner_widget)
         self.inner_layout.addWidget(self.view)
 
+        self.calculate_norm_thread = None
+
         self.layout.addWidget(self.scroll_area)
         self.create_add_button()  # Move add button creation here
         self.create_delete_button()
@@ -88,7 +112,8 @@ class Controller:
         self.create_find_children_button()
         self.create_find_parents_button()
         self.create_show_tree_button()
-
+        self.create_calculate_norm_button()  # Вызываем создание кнопки подсчета сводных норм
+        self.create_show_spec_structure_button()
         self.update_view()
 
     def create_table_buttons(self):
@@ -111,28 +136,27 @@ class Controller:
         """Применяет стилизацию к кнопке."""
         button.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: black;
+                background-color: #ffffff;
+                color: #333333;
+                border: 2px solid #0078d7;
+                border-radius: 10px;
+                padding: 8px 16px;
+                font-size: 14px;
                 font-weight: bold;
-                border: 2px solid black;
-                padding: 5px;;
-                border-radius: 15px;
-                font-size: 12pt;
-                transition: all 0.2s ease;
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             }
             QPushButton:hover {
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 black, stop: 1 #333333
-                );
-                color: white;
+                background-color: #0078d7;
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background-color: #005bb5;
+                color: #ffffff;
             }
         """)
 
     def get_table_names(self) -> list:
         """Возвращает список имен всех таблиц в базе данных."""
-        return ["classification", "product", "unit"]
+        return ["classification", "product", "unit", "spec_position"]
 
     def show_table_data(self, table_name: str):
         """Отображает данные из выбранной таблицы."""
@@ -248,3 +272,42 @@ class Controller:
         """Открывает окно для поиска продуктов по классу."""
         find_products_window = FindWindow(self.db_dao, "products")
         find_products_window.exec_()
+
+    def create_calculate_norm_button(self):
+        """Создает кнопку для подсчета сводных норм."""
+        calculate_norm_button = QPushButton("Подсчитать сводные нормы", self.central_widget)
+        calculate_norm_button.clicked.connect(self.start_calculate_norm_thread)
+        self.style_button(calculate_norm_button)
+        self.layout.addWidget(calculate_norm_button)
+
+    def start_calculate_norm_thread(self):
+        """Запускает поток для подсчета сводных норм."""
+        self.calculate_norm_thread = CalculateNormsThread(self.db_dao)
+        self.calculate_norm_thread.result_signal.connect(self.handle_calculate_norm_result)
+        self.calculate_norm_thread.error_signal.connect(self.handle_error)
+        self.calculate_norm_thread.start()
+
+    def handle_calculate_norm_result(self, result):
+        """Обрабатывает результат подсчета сводных норм."""
+        column_names = ["ID компонента", "Количество", "Единица измерения"]
+        self.view.update_data(result, column_names)
+
+    def create_show_spec_structure_button(self):
+        """Создает кнопку для отображения структуры спецификации."""
+        show_spec_structure_button = QPushButton("Отобразить структуру спецификации", self.central_widget)
+        show_spec_structure_button.clicked.connect(self.show_spec_structure)  # Здесь нужно подключить правильный метод
+        self.style_button(show_spec_structure_button)
+        self.layout.addWidget(show_spec_structure_button)
+
+    def show_spec_structure(self):
+        """Отображает структуру спецификации, используя метод из DatabaseDAO."""
+        results, column_names = self.db_dao.show_spec_structure()  # Получаем данные и названия столбцов
+        if results:
+            self.view.update_data(results, column_names)  # Обновляем представление
+        else:
+            print("Структура спецификации пуста")
+
+    def handle_error(self, error_message):
+        """Обрабатывает ошибки, если они произошли."""
+        print(f"Ошибка: {error_message}")
+        # Можно также отобразить сообщение пользователю через диалоговое окно или статусную строку
