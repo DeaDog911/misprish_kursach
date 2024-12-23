@@ -25,6 +25,8 @@ class FindWindow(QDialog):
                 title = 'Найти продукты класса'
             case 'changes':
                 title = 'Найти изменения'
+            case 'calculate':
+                title = 'Расчитать сводные нормы'
         self.setWindowTitle(title)
         self.setFixedSize(600, 500)
 
@@ -39,7 +41,11 @@ class FindWindow(QDialog):
         self.id_field = QLineEdit()
         self.layout.addWidget(self.id_field)
 
-        find_button = QPushButton("Найти")
+        pushButtonText = "Найти"
+        if (mode == 'calculate'):
+            pushButtonText = 'Рассчитать'
+
+        find_button = QPushButton(pushButtonText)
         match mode:
             case 'parents':
                 find_button.clicked.connect(self.find_parents)
@@ -49,6 +55,8 @@ class FindWindow(QDialog):
                 find_button.clicked.connect(self.find_products)
             case 'changes':
                 find_button.clicked.connect(self.find_changes)
+            case 'calculate':
+                find_button.clicked.connect(self.calculate)
 
         self.layout.addWidget(find_button)
         self.result_table = QTableWidget()
@@ -173,3 +181,17 @@ class FindWindow(QDialog):
             self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
             self.result_table.setItem(row_idx, 2, QTableWidgetItem(str(row_data[2])))
             self.result_table.setItem(row_idx, 3, QTableWidgetItem(row_data[3]))
+
+    def calculate(self):
+        class_id = self.id_field.text()
+        if class_id == "":
+            return
+        results = self.db_dao.calculate_component_quantities(class_id)
+        self.result_table.setRowCount(len(results))
+        self.result_table.setColumnCount(3)
+        self.result_table.setHorizontalHeaderLabels(
+            ["ID product", "Product name", "Quantity Sum"])
+        for row_idx, row_data in enumerate(results):
+            self.result_table.setItem(row_idx, 0, QTableWidgetItem(str(row_data[0])))
+            self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
+            self.result_table.setItem(row_idx, 2, QTableWidgetItem(str(row_data[2])))

@@ -19,14 +19,15 @@ class CalculateNormsThread(QThread):
     result_signal = pyqtSignal(list)  # Сигнал для передачи результата обратно в главный поток
     error_signal = pyqtSignal(str)  # Сигнал для передачи ошибок
 
-    def __init__(self, db_dao):
+    def __init__(self, db_dao, prod_id):
         super().__init__()
         self.db_dao = db_dao
+        self.prod_id = prod_id
 
     def run(self):
         """Запускает подсчет сводных норм в фоновом потоке."""
         try:
-            result = self.db_dao.calculate_component_quantities()
+            result = self.db_dao.calculate_component_quantities(self.prod_id)
             if result:
                 self.result_signal.emit(result)  # Отправляем результат обратно в главный поток
             else:
@@ -378,11 +379,8 @@ class Controller:
         return calculate_norm_button
 
     def start_calculate_norm_thread(self):
-        """Запускает поток для подсчета сводных норм."""
-        self.calculate_norm_thread = CalculateNormsThread(self.db_dao)
-        self.calculate_norm_thread.result_signal.connect(self.handle_calculate_norm_result)
-        self.calculate_norm_thread.error_signal.connect(self.handle_error)
-        self.calculate_norm_thread.start()
+        find_changes_window = FindWindow(self.db_dao, "calculate")
+        find_changes_window.exec_()
 
     def handle_calculate_norm_result(self, result):
         """Обрабатывает результат подсчета сводных норм."""

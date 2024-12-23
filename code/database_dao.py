@@ -224,11 +224,11 @@ class DatabaseDAO:
             return []
         return results
 
-    def calculate_component_quantities(self):
+    def calculate_component_quantities(self, prod_id):
         """Выполняет подсчет сводных норм и возвращает результат."""
         try:
             query = "SELECT * FROM calculate_component_quantities(%s);"  # Подставим параметры (например, 1)
-            self.cur.execute(query, (1,))
+            self.cur.execute(query, (prod_id,))
             results = self.cur.fetchall()
             return results
         except Exception as e:
