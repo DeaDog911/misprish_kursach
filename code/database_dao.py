@@ -212,7 +212,17 @@ class DatabaseDAO:
             self.connection.rollback()
             raise e
 
-    import traceback
+    def get_product_version(self, base_product_id):
+        query = """
+        SELECT * FROM get_product_version(%s);
+        """
+        try:
+            self.cur.execute(query, (base_product_id,))
+            results = self.cur.fetchall()
+        except Exception as e:
+            print(e)
+            return []
+        return results
 
     def calculate_component_quantities(self):
         """Выполняет подсчет сводных норм и возвращает результат."""
@@ -230,17 +240,27 @@ class DatabaseDAO:
 
     def show_spec_structure(self):
         """Отображает структуру спецификации."""
+        query = "SELECT * FROM get_specification_with_names();"
         try:
-            # Получаем все данные из таблицы спецификаций
-            results = self.get_all_from_table("spec_position")
-
-            # Если результаты не пусты, возвращаем их для отображения
+            self.cur.execute(query)
+            results = self.cur.fetchall()
+            self.connection.commit()
             if results:
-                column_names = ["ID продукта", "ID части", "Количество"]  # Пример названий колонок
+                column_names = ["ID продукта","Имя продукта", "ID части","Имя части","Количество"]  # Пример названий колонок
                 return results, column_names
             else:
-                return [], []  # Возвращаем пустые данные и столбцы, если результатов нет
+                return [], []
         except Exception as e:
             print("Ошибка при получении структуры спецификации:", e)
             return [], []  # В случае ошибки возвращаем пустые данные
 
+    def copy_spec(self, data):
+        """Копирует структуру спецификации."""
+        query = " SELECT copy_specification (%s, %s); "
+        try:
+            values = (data["source_product_id"], data["target_product_id"])
+            self.cur.execute(query, values)
+            self.connection.commit()
+        except Exception as e:
+            self.connection.rollback()
+            raise e

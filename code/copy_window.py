@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QLineEdit
 from code.database_dao import DatabaseDAO
 
 
-class AddWindow(QDialog):
+class CopyWindow(QDialog):
     """Окно для добавления записей в базу данных."""
 
-    record_added = pyqtSignal()
+    record_copy = pyqtSignal()
 
     def __init__(self, table_name: str, db_dao: DatabaseDAO):
         """
@@ -21,8 +21,8 @@ class AddWindow(QDialog):
         self.db_dao = db_dao
         self.table_name = table_name
         self.fields = {}
-        self.setWindowTitle("Добавить запись")
-        self.setFixedSize(500, 550)  # Увеличенный размер окна для удобства
+        self.setWindowTitle("Скопировать спецификацию")
+        self.setFixedSize(500, 550)
 
         self.layout = QVBoxLayout()
 
@@ -34,7 +34,7 @@ class AddWindow(QDialog):
 
         self.update_fields()
 
-        add_button = QPushButton("Добавить")
+        add_button = QPushButton("Скопировать")
         add_button.clicked.connect(self.add_record)
         self.layout.addWidget(add_button)
 
@@ -89,23 +89,8 @@ class AddWindow(QDialog):
         """)
 
     def update_fields(self):
-        """Обновляет поля ввода в зависимости от выбранной таблицы."""
-        # selected_table = self.table_selector.currentText()
-
-        # Очищаем предыдущие поля
-        # for i in reversed(range(self.fields_layout.count())):
-        #     self.fields_layout.itemAt(i).widget().setParent(None)
-        #
-        # self.fields = {}
-
-        if self.table_name == "classification":
-            columns = ["short_name", "name", "id_unit", "id_main_class"]
-        elif self.table_name == "product":
-            columns = ["short_name", "name", "id_class", "id_unit", "price", "base_id_product"]
-        elif self.table_name == "unit":
-            columns = ["short_name", "name", "code"]
-        elif self.table_name == "spec_position":
-            columns = ["id_product_input", "id_part_input", "quantity"]
+        if self.table_name == "spec_position":
+            columns = ["source_product_id", "target_product_id"]
         else:
             columns = []
 
@@ -119,11 +104,11 @@ class AddWindow(QDialog):
 
     def add_record(self):
         data = {column: self.fields[column].text().strip() for column in self.fields}
-
         try:
-            self.db_dao.insert_data_into_table(self.table_name, data)
-            QMessageBox.information(self, "Успех", f"Запись успешно добавлена в таблицу {self.table_name}.")
-            self.record_added.emit()
+            print(data)
+            self.db_dao.copy_spec(data)
+            QMessageBox.information(self, "Успех", f"Запись успешно скопирована в таблицу spec_position.")
+            self.record_copy.emit()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить запись: {str(e)}")
         self.accept()

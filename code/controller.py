@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QApplication, QSc
 from code.additional_window import FindWindow
 from code.change_product_class_window import ChangeProductClassWindow
 from code.chante_parent_class_window import ChangeParentClassWindow
+from code.copy_window import CopyWindow
 from code.delete_window import DeleteWindow
 from code.add_window import AddWindow  # Ensure these imports are correct and available
 from code.view import TableView
@@ -118,8 +119,7 @@ class Controller:
         self.create_units_buttons()
         self.create_specification_buttons()
 
-        self.show_buttons_for_group(None)
-        self.update_view()
+        self.show_buttons_for_group("classification")
 
     def create_section_buttons(self):
         """Создает кнопки для выбора разделов."""
@@ -298,12 +298,15 @@ class Controller:
     def open_add_window(self, table_name):
         """Открывает окно для добавления новой записи."""
         add_window = AddWindow(table_name, self.db_dao)
+        add_window.record_added.connect(lambda: self.show_table_data(table_name))
         add_window.exec_()
 
-    def open_delete_window(self,table_name):
+    def open_delete_window(self, table_name):
         """Открывает окно для удаления записи."""
         delete_window = DeleteWindow(table_name, self.db_dao)
+        delete_window.record_deleted.connect(lambda: self.show_table_data(table_name))
         delete_window.exec_()
+
 
     def open_find_children_window(self):
         """Открывает окно для поиска потомков класса."""
@@ -411,7 +414,8 @@ class Controller:
         return find_changes_button
 
     def find_changes(self):
-        return
+        find_changes_window = FindWindow(self.db_dao, "changes")
+        find_changes_window.exec_()
 
 
     def create_copy_spec_button(self):
@@ -423,7 +427,9 @@ class Controller:
         return copy_spec_button
 
     def copy_spec(self):
-        return
+        copy_window = CopyWindow('spec_position', self.db_dao)
+        copy_window.record_copy.connect(lambda: self.show_table_data('spec_position'))
+        copy_window.exec_()
 
     def handle_error(self, error_message):
         """Обрабатывает ошибки, если они произошли."""

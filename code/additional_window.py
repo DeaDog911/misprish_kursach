@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem
-
 from code.database_dao import DatabaseDAO
 
 
@@ -24,12 +23,17 @@ class FindWindow(QDialog):
                 title = 'Найти потомков класса'
             case 'products':
                 title = 'Найти продукты класса'
+            case 'changes':
+                title = 'Найти изменения'
         self.setWindowTitle(title)
         self.setFixedSize(600, 500)
 
         self.layout = QVBoxLayout()
 
-        label_id = QLabel("Введите ID класса:")
+        if (mode != 'changes'):
+            label_id = QLabel("Введите ID класса:")
+        else:
+            label_id = QLabel("Введите Base Id продукта:")
         self.layout.addWidget(label_id)
 
         self.id_field = QLineEdit()
@@ -43,9 +47,10 @@ class FindWindow(QDialog):
                 find_button.clicked.connect(self.find_children)
             case 'products':
                 find_button.clicked.connect(self.find_products)
+            case 'changes':
+                find_button.clicked.connect(self.find_changes)
 
         self.layout.addWidget(find_button)
-
         self.result_table = QTableWidget()
         self.layout.addWidget(self.result_table)
 
@@ -137,6 +142,22 @@ class FindWindow(QDialog):
         for row_idx, row_data in enumerate(results):
             self.result_table.setItem(row_idx, 0, QTableWidgetItem(str(row_data[0])))
             self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
+
+
+    def find_changes(self):
+        """Ищет изменения продукта"""
+        base_product_id = self.id_field.text()
+        if base_product_id == "":
+            return
+        results = self.db_dao.get_product_version(base_product_id)
+        self.result_table.setRowCount(len(results))
+        self.result_table.setColumnCount(4)
+        self.result_table.setHorizontalHeaderLabels(["ID product", "Short name", "name", "Base Id product"])
+        for row_idx, row_data in enumerate(results):
+            self.result_table.setItem(row_idx, 0, QTableWidgetItem(str(row_data[0])))
+            self.result_table.setItem(row_idx, 1, QTableWidgetItem(row_data[1]))
+            self.result_table.setItem(row_idx, 2, QTableWidgetItem(row_data[2]))
+            self.result_table.setItem(row_idx, 3, QTableWidgetItem(str(row_data[3])))
 
     def find_products(self):
         """Ищет продукты класса"""

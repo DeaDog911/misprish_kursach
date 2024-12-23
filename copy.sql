@@ -505,3 +505,133 @@ SELECT * FROM show_spec_product(1); -- Спецификация для прод�
 -- Вывод полной структуры спецификации
 -- =========================================
 SELECT * FROM get_spec_positions();
+
+-- Функция для получения иерархии версий продукта
+CREATE OR REPLACE FUNCTION get_product_version(product_id INT)
+RETURNS TABLE (
+    version_id INT,
+    version_short_name VARCHAR(20),
+    version_name VARCHAR(50),
+    base_version_id INT,
+    price NUMERIC(13, 2),
+    level INT
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH RECURSIVE version_tree AS (
+        -- Начальный продукт (первая версия)
+        SELECT
+            p.id_product AS version_id,
+            p.short_name AS version_short_name,
+            p.name AS version_name,
+            p.base_id_product AS base_version_id,
+            p.price,
+            1 AS level
+        FROM Product p
+        WHERE p.id_product = product_id
+
+        UNION ALL
+
+        -- Рекурсивное добавление зависимых версий
+        SELECT
+            p.id_product AS version_id,
+            p.short_name AS version_short_name,
+            p.name AS version_name,
+            p.base_id_product AS base_version_id,
+            p.price,
+            vt.level + 1 AS level
+        FROM Product p
+        INNER JOIN version_tree vt
+            ON p.base_id_product = vt.version_id
+        WHERE p.id_product != p.base_id_product -- Исключение самоссылки
+    )
+    SELECT
+        vt.version_id,
+        vt.version_short_name,
+        vt.version_name,
+        vt.base_version_id,
+        vt.price,
+        vt.level
+    FROM version_tree vt
+    ORDER BY vt.level;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION copy_specification(
+    source_product_id INT,
+    target_product_id INT
+)
+RETURNS VOID AS $$
+DECLARE
+    -- Проверка существования изделий
+    source_exists BOOLEAN;
+    target_exists BOOLEAN;
+    has_cycle BOOLEAN;
+BEGIN
+    -- Проверяем, существуют ли исходный и целевой продукты
+    SELECT EXISTS(SELECT 1 FROM Product WHERE id_product = source_product_id) INTO source_exists;
+    SELECT EXISTS(SELECT 1 FROM Product WHERE id_product = target_product_id) INTO target_exists;
+
+    IF NOT source_exists THEN
+        RAISE EXCEPTION 'Исходный продукт с id_product % не существует', source_product_id;
+    END IF;
+
+    IF NOT target_exists THEN
+        RAISE EXCEPTION 'Целевой продукт с id_product % не существует', target_product_id;
+    END IF;
+
+    -- Проверяем, чтобы не возник цикл
+    SELECT EXISTS (
+        WITH RECURSIVE cte AS (
+            SELECT sp.id_product, sp.id_part
+            FROM Spec_position sp
+            WHERE sp.id_product = source_product_id
+
+            UNION ALL
+
+            SELECT sp.id_product, sp.id_part
+            FROM Spec_position sp
+            JOIN cte ON sp.id_product = cte.id_part
+        )
+        SELECT 1
+        FROM cte
+        WHERE id_part = target_product_id
+    ) INTO has_cycle;
+
+    IF has_cycle THEN
+        RAISE EXCEPTION 'Цикл обнаружен: нельзя скопировать спецификацию от % к %', source_product_id, target_product_id;
+    END IF;
+
+    -- Копируем спецификацию
+    INSERT INTO Spec_position (id_product, id_part, quantity)
+    SELECT target_product_id, sp.id_part, sp.quantity
+    FROM Spec_position sp
+    WHERE sp.id_product = source_product_id;
+
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_specification_with_names()
+RETURNS TABLE (
+    id_product INT,
+    product_name VARCHAR(50),
+    id_part INT,
+    part_name VARCHAR(50),
+    quantity INT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        sp.id_product,
+        p1.name AS product_name,
+        sp.id_part,
+        p2.name AS part_name,
+        sp.quantity
+    FROM
+        Spec_position sp
+    JOIN
+        Product p1 ON sp.id_product = p1.id_product
+    JOIN
+        Product p2 ON sp.id_part = p2.id_product;
+END;
+$$ LANGUAGE plpgsql;

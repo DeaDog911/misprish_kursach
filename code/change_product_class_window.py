@@ -1,7 +1,4 @@
-import os
-
 from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QMessageBox, QPushButton
-
 from code.constants import file_path
 from code.database_dao import DatabaseDAO
 

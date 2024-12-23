@@ -1,7 +1,5 @@
 # change_parent_class_window.py
-
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
-
 from code.constants import file_path
 
 

@@ -1,3 +1,4 @@
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 
 from code.database_dao import DatabaseDAO
@@ -5,6 +6,7 @@ from code.database_dao import DatabaseDAO
 class DeleteWindow(QDialog):
     """Окно для удаления записей из базы данных."""
 
+    record_deleted = pyqtSignal()
     def __init__(self, current_table: str, db_dao: DatabaseDAO):
         """
         Конструктор класса.
@@ -86,6 +88,7 @@ class DeleteWindow(QDialog):
         try:
             self.db_dao.delete_data_from_table(self.current_table, record_id)
             QMessageBox.information(self, "Успех", "Запись удалена успешно")
+            self.record_deleted.emit()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось удалить запись: {str(e)}")
         self.accept()
